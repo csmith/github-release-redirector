@@ -13,10 +13,26 @@ $ github-release-redirector -port 1234 -repo user/repo
 or using docker:
 
 ```console
-$ docker run -p 8080 csmith/github-release-redirector -repo user/repo
+$ docker run -p 8080:8080 csmith/github-release-redirector -repo user/repo
+```
+
+## Options
+
+```
+Usage of github-release-redirector:
+  -port int
+    	the port to listen on for HTTP requests (default 8080)
+  -redirect string
+    	if specified, requests for / will be redirected to this url
+  -repo string
+    	the repository to redirect releases for, in user/repo format [required]
 ```
 
 ## Notes
+
+If the `-redirect` option is specified, then requests to the root (i.e. `/`)
+will be redirected to that URL, and no further processing will be done for
+that request.
 
 Releases are refreshed at startup and then once an hour.
 

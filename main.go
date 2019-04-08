@@ -17,6 +17,7 @@ import (
 var (
 	owner string
 	repo string
+	redirect *string
 	ctx context.Context
 	client *github.Client
 	release *github.RepositoryRelease
@@ -31,7 +32,17 @@ func fetchLatest() {
 	release = latest
 }
 
+func temporaryRedirect(w http.ResponseWriter, url string) {
+	w.Header().Add("Location", url)
+	w.WriteHeader(http.StatusTemporaryRedirect)
+}
+
 func serve(w http.ResponseWriter, request *http.Request) {
+	if "/" == request.RequestURI && len(*redirect) > 0 {
+		temporaryRedirect(w, *redirect)
+		return
+	}
+
 	if release == nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = fmt.Fprint(w, "Unknown release")
@@ -40,8 +51,7 @@ func serve(w http.ResponseWriter, request *http.Request) {
 
 	for _, asset := range release.Assets {
 		if "/" + *asset.Name == request.RequestURI {
-			w.Header().Add("Location", *asset.BrowserDownloadURL)
-			w.WriteHeader(http.StatusTemporaryRedirect)
+			temporaryRedirect(w, *asset.BrowserDownloadURL)
 			return
 		}
 	}
@@ -50,19 +60,31 @@ func serve(w http.ResponseWriter, request *http.Request) {
 	_, _ = fmt.Fprint(w, "Asset not found in release ", *release.Name)
 }
 
-func main() {
-	var fullRepo = flag.String("repo", "", "the repository to redirect releases for, in user/repo format")
-	var port = flag.Int("port", 8080, "the port to listen on for HTTP requests")
-	flag.Parse()
-
-	if strings.Count(*fullRepo, "/") != 1 {
-		log.Println("Repository must be specified in user/repo format")
-		return
+func parseRepo(fullRepo *string) error {
+	if len(*fullRepo) == 0 {
+		return fmt.Errorf("the repository option must be specified")
 	}
-
+	if strings.Count(*fullRepo, "/") != 1 {
+		return fmt.Errorf("the repository must be specified in `user/repo` format")
+	}
 	repoParts := strings.Split(*fullRepo, "/")
 	owner = repoParts[0]
 	repo = repoParts[1]
+	return nil
+}
+
+func main() {
+	redirect = flag.String("redirect", "", "if specified, requests for / will be redirected to this url")
+	var fullRepo = flag.String("repo", "", "the repository to redirect releases for, in user/repo format [required]")
+	var port = flag.Int("port", 8080, "the port to listen on for HTTP requests")
+
+	flag.Parse()
+
+	if err := parseRepo(fullRepo); err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "Error: %s\n\n", err.Error())
+		flag.Usage()
+		return
+	}
 
 	client = github.NewClient(nil)
 
