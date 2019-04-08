@@ -21,6 +21,7 @@ var (
 	ctx context.Context
 	client *github.Client
 	release *github.RepositoryRelease
+	ticker *time.Ticker
 )
 
 func fetchLatest() {
@@ -29,6 +30,7 @@ func fetchLatest() {
 		log.Println("Error retrieving latest release", err)
 		return
 	}
+	log.Printf("Found latest release: %s\n", *latest.Name)
 	release = latest
 }
 
@@ -73,10 +75,26 @@ func parseRepo(fullRepo *string) error {
 	return nil
 }
 
+func initTicker(seconds int) {
+	if seconds > 0 {
+		log.Printf("Starting ticker for polling once every %d seconds.\n", seconds)
+		ticker = time.NewTicker(time.Duration(seconds) * time.Second)
+		go func() {
+			for range ticker.C {
+				fetchLatest()
+			}
+		}()
+	} else {
+		log.Println("Not starting ticker; performing one off fetch and relying on webhooks.")
+	}
+	fetchLatest()
+}
+
 func main() {
 	redirect = flag.String("redirect", "", "if specified, requests for / will be redirected to this url")
 	var fullRepo = flag.String("repo", "", "the repository to redirect releases for, in user/repo format [required]")
 	var port = flag.Int("port", 8080, "the port to listen on for HTTP requests")
+	var poll = flag.Int("poll", 3600, "the amount of time to wait between polling for releases; 0 to disable polling")
 
 	flag.Parse()
 
@@ -88,15 +106,6 @@ func main() {
 
 	client = github.NewClient(nil)
 
-	ticker := time.NewTicker(time.Hour)
-	go func() {
-		fetchLatest()
-		for range ticker.C {
-			fetchLatest()
-		}
-	}()
-
-
 	var cancel context.CancelFunc
 	ctx, cancel = context.WithCancel(context.Background())
 
@@ -107,13 +116,17 @@ func main() {
 	go func() {
 		for sig := range c {
 			cancel()
-			ticker.Stop()
-			log.Printf("Received %s, exiting.", sig.String())
+			if ticker != nil {
+				ticker.Stop()
+			}
+			log.Printf("Received %s, exiting.\n", sig.String())
 			os.Exit(0)
 		}
 	}()
 
-	log.Printf("Listing on :%d", *port)
+	initTicker(*poll)
+
+	log.Printf("Listing on :%d\n", *port)
 
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%d", *port),

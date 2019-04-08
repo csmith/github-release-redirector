@@ -20,6 +20,8 @@ $ docker run -p 8080:8080 csmith/github-release-redirector -repo user/repo
 
 ```
 Usage of github-release-redirector:
+  -poll int
+    	the amount of time to wait between polling for releases; 0 to disable polling (default 3600)
   -port int
     	the port to listen on for HTTP requests (default 8080)
   -redirect string
@@ -34,7 +36,9 @@ If the `-redirect` option is specified, then requests to the root (i.e. `/`)
 will be redirected to that URL, and no further processing will be done for
 that request.
 
-Releases are refreshed at startup and then once an hour.
+Releases are refreshed at startup and then, by default, once an hour. You can
+customise this duration with the `-poll` option; setting the poll time to `0`
+will disable polling entirely other than at startup.
 
 Assets are matched on their name, so an asset attached to the latest release
 named "myproject-installer-1.2.3.exe" will be available at the URL
