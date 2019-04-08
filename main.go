@@ -18,6 +18,7 @@ var (
 	owner string
 	repo string
 	redirect *string
+	webhookPath *string
 	ctx context.Context
 	client *github.Client
 	release *github.RepositoryRelease
@@ -39,27 +40,46 @@ func temporaryRedirect(w http.ResponseWriter, url string) {
 	w.WriteHeader(http.StatusTemporaryRedirect)
 }
 
-func serve(w http.ResponseWriter, request *http.Request) {
+func serveStaticPaths(w http.ResponseWriter, request *http.Request) bool {
 	if "/" == request.RequestURI && len(*redirect) > 0 {
 		temporaryRedirect(w, *redirect)
-		return
+		return true
 	}
 
+	if *webhookPath == request.RequestURI {
+		log.Println("Received webhook, starting a refresh")
+		go func() {
+			fetchLatest()
+		}()
+		w.WriteHeader(http.StatusOK)
+		return true
+	}
+
+	return false
+}
+
+func serveAssets(w http.ResponseWriter, request *http.Request) bool {
 	if release == nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = fmt.Fprint(w, "Unknown release")
-		return
+		return true
 	}
 
 	for _, asset := range release.Assets {
 		if "/" + *asset.Name == request.RequestURI {
 			temporaryRedirect(w, *asset.BrowserDownloadURL)
-			return
+			return true
 		}
 	}
 
-	w.WriteHeader(http.StatusNotFound)
-	_, _ = fmt.Fprint(w, "Asset not found in release ", *release.Name)
+	return false
+}
+
+func serve(w http.ResponseWriter, request *http.Request) {
+	if !serveStaticPaths(w, request) && !serveAssets(w, request) {
+		w.WriteHeader(http.StatusNotFound)
+		_, _ = fmt.Fprint(w, "Asset not found in release ", *release.Name)
+	}
 }
 
 func parseRepo(fullRepo *string) error {
@@ -92,6 +112,7 @@ func initTicker(seconds int) {
 
 func main() {
 	redirect = flag.String("redirect", "", "if specified, requests for / will be redirected to this url")
+	webhookPath = flag.String("webhook", "", "full path to receive release webhooks from GitHub on")
 	var fullRepo = flag.String("repo", "", "the repository to redirect releases for, in user/repo format [required]")
 	var port = flag.Int("port", 8080, "the port to listen on for HTTP requests")
 	var poll = flag.Int("poll", 3600, "the amount of time to wait between polling for releases; 0 to disable polling")
