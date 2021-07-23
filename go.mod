@@ -1,6 +1,6 @@
 module github.com/csmith/github-release-redirector
 
-go 1.12
+go 1.16
 
 require (
 	github.com/google/go-github v17.0.0+incompatible
