@@ -13,7 +13,7 @@ $ github-release-redirector -port 1234 -repo user/repo
 or using docker:
 
 ```console
-$ docker run -p 8080:8080 csmith/github-release-redirector -repo user/repo
+$ docker run -p 8080:8080 ghcr.io/csmith/github-release-redirector -repo user/repo
 ```
 
 ## Options
