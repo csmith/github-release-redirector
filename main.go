@@ -4,7 +4,8 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/google/go-github/github"
+	"github.com/csmith/envflag/v2"
+	"github.com/google/go-github/v72/github"
 	"log"
 	"net/http"
 	"os"
@@ -15,14 +16,14 @@ import (
 )
 
 var (
-	owner string
-	repo string
-	redirect *string
+	owner       string
+	repo        string
+	redirect    *string
 	webhookPath *string
-	ctx context.Context
-	client *github.Client
-	release *github.RepositoryRelease
-	ticker *time.Ticker
+	ctx         context.Context
+	client      *github.Client
+	release     *github.RepositoryRelease
+	ticker      *time.Ticker
 )
 
 func fetchLatest() {
@@ -66,7 +67,7 @@ func serveAssets(w http.ResponseWriter, request *http.Request) bool {
 	}
 
 	for _, asset := range release.Assets {
-		if "/" + *asset.Name == request.RequestURI {
+		if "/"+*asset.Name == request.RequestURI {
 			temporaryRedirect(w, *asset.BrowserDownloadURL)
 			return true
 		}
@@ -117,7 +118,7 @@ func main() {
 	var port = flag.Int("port", 8080, "the port to listen on for HTTP requests")
 	var poll = flag.Int("poll", 3600, "the amount of time to wait between polling for releases; 0 to disable polling")
 
-	flag.Parse()
+	envflag.Parse()
 
 	if err := parseRepo(fullRepo); err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "Error: %s\n\n", err.Error())

@@ -18,18 +18,20 @@ $ docker run -p 8080:8080 ghcr.io/csmith/github-release-redirector -repo user/re
 
 ## Options
 
+Options can be passed as either command line arguments or environment variables:
+
 ```
 Usage of github-release-redirector:
   -poll int
-    	the amount of time to wait between polling for releases; 0 to disable polling (default 3600)
+    	[POLL] the amount of time to wait between polling for releases; 0 to disable polling (default 3600)
   -port int
-    	the port to listen on for HTTP requests (default 8080)
+    	[PORT] the port to listen on for HTTP requests (default 8080)
   -redirect string
-    	if specified, requests for / will be redirected to this url
+    	[REDIRECT] if specified, requests for / will be redirected to this url
   -repo string
-    	the repository to redirect releases for, in user/repo format [required]
+    	[REPO] the repository to redirect releases for, in user/repo format [required]
   -webhook string
-    	full path to receive release webhooks from GitHub on
+    	[WEBHOOK] full path to receive release webhooks from GitHub on
 ```
 
 ## Notes
