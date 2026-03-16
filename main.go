@@ -5,7 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/csmith/envflag/v2"
-	"github.com/google/go-github/v82/github"
+	"github.com/google/go-github/v83/github"
 	"log"
 	"net/http"
 	"os"
