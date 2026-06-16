@@ -127,7 +127,7 @@ func main() {
 	}
 
 	var err error
-	client, err = github.NewClient(nil)
+	client, err = github.NewClient()
 	if err != nil {
 		log.Fatalf("Failed to create GitHub client: %s", err)
 	}
