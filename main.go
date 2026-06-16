@@ -126,7 +126,11 @@ func main() {
 		return
 	}
 
-	client = github.NewClient(nil)
+	var err error
+	client, err = github.NewClient(nil)
+	if err != nil {
+		log.Fatalf("Failed to create GitHub client: %s", err)
+	}
 
 	var cancel context.CancelFunc
 	ctx, cancel = context.WithCancel(context.Background())
@@ -155,7 +159,7 @@ func main() {
 		Handler: http.HandlerFunc(serve),
 	}
 
-	err := server.ListenAndServe()
+	err = server.ListenAndServe()
 	if err != nil {
 		log.Println("Error listening for requests on port ", port, err)
 	}
