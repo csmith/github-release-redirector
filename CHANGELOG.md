@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.1 - 2026-10-20
+
+### Changes
+
+* Updated to Go 1.27.3 and dockerbase 1.20261020.1, which include fixes for
+  the eMudhra intermediate CA compromise
+
 ## 1.1.0 - 2025-06-13
 
 ### New features
