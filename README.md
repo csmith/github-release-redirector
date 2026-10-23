@@ -1,5 +1,10 @@
 # github-release-redirector
 
+> [!IMPORTANT]
+> This project is deprecated: GitHub has since gained support for
+> [linking to the latest release](https://docs.github.com/en/repositories/releasing-projects-on-github/linking-to-releases#linking-to-the-latest-release)
+> natively.
+
 Small go application that listens for incoming HTTP requests and redirects
 to assets from the latest release published to a GitHub repository.
 
